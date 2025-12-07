@@ -142,10 +142,54 @@ button:hover {
   margin: 0;
   font-size: 1.1rem;
 }
+.map-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
 .map-description {
   margin: 0.25rem 0 0 0;
   color: #aab;
   font-size: 0.85rem;
+}
+.map-progress {
+  min-width: 240px;
+  background: #0c0f16;
+  border: 1px solid #1f2635;
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+  color: #d9e4ff;
+}
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background: #161b26;
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #24304a;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2e7d32, #1b5e20);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.progress-percent {
+  text-align: right;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+  color: #a8b6d6;
 }
 .section-title-btn {
   background: transparent;
