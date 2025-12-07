@@ -76,6 +76,13 @@ const MAPS = {
   },
   "sang des morts": {
     description: "La prison d'Alcatraz réanimée",
+    resources: [
+      {
+        title: "Guide complet Sang des morts (cod-zombie.fr)",
+        url: "https://cod-zombie.fr/black-ops-4/guide-sang-des-morts/",
+        description: "Cheminement détaillé de la quête principale et astuces clés"
+      }
+    ],
     sections: {
       "🎯 Easter Egg Principal": [
         "Activer le Pack-a-Punch",

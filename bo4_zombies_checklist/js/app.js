@@ -57,6 +57,12 @@ class ChecklistApp {
     }
   }
 
+  ensureGuideNotes(mapState) {
+    if (typeof mapState.guideNotes !== "string") {
+      mapState.guideNotes = "";
+    }
+  }
+
   init() {
     this.setupEventListeners();
     this.populateMapSelect();
@@ -123,7 +129,7 @@ class ChecklistApp {
     const mapConfig = MAPS[this.currentMap];
     const mapState = this.getMapState(this.currentMap);
     this.ensureJournalDefaults(mapState, mapConfig);
-
+    this.ensureGuideNotes(mapState);
     const { done, total, percent } = this.computeMapProgress(mapState, mapConfig);
 
     document.getElementById("currentMapTitle").innerHTML = `
@@ -148,6 +154,9 @@ class ChecklistApp {
     const toolsContainer = document.getElementById("mapTools");
     toolsContainer.innerHTML = "";
     toolsContainer.appendChild(this.createSymbolCard(mapState));
+
+    const resourcesCard = this.createResourcesCard(mapConfig, mapState);
+    if (resourcesCard) toolsContainer.appendChild(resourcesCard);
 
     const container = document.getElementById("sectionsContainer");
     container.innerHTML = "";
@@ -276,6 +285,69 @@ class ChecklistApp {
     });
 
     card.appendChild(content);
+
+    return card;
+  }
+
+  createResourcesCard(mapConfig, mapState) {
+    const resources = mapConfig.resources || [];
+    if (!resources.length && !mapState.guideNotes) return null;
+
+    const card = document.createElement("div");
+    card.className = "tools-card resources-card";
+
+    const header = document.createElement("div");
+    header.className = "tools-header";
+    header.innerHTML = `
+      <div>
+        <p class="tools-eyebrow">Guides & infos</p>
+        <h3>Raccourcis vers les guides</h3>
+        <p class="tools-subtitle">Liens externes pour vérifier rapidement un tuto (ouvre dans un nouvel onglet).</p>
+      </div>
+    `;
+
+    card.appendChild(header);
+
+    if (resources.length) {
+      const list = document.createElement("div");
+      list.className = "resource-links";
+
+      resources.forEach((resource) => {
+        const item = document.createElement("a");
+        item.className = "resource-link";
+        item.href = resource.url;
+        item.target = "_blank";
+        item.rel = "noreferrer";
+        item.innerHTML = `
+          <span class="resource-title">${resource.title}</span>
+          <span class="resource-desc">${resource.description || ""}</span>
+        `;
+        list.appendChild(item);
+      });
+
+      card.appendChild(list);
+    }
+
+    const notes = document.createElement("div");
+    notes.className = "resource-notes";
+
+    const label = document.createElement("label");
+    label.textContent = "Notes depuis les guides";
+    label.setAttribute("for", "guideNotes" + this.currentMap);
+
+    const textarea = document.createElement("textarea");
+    textarea.id = "guideNotes" + this.currentMap;
+    textarea.placeholder = "Colle ici les infos du guide (codes, étapes exactes, astuces).";
+    textarea.value = mapState.guideNotes;
+    textarea.addEventListener("input", () => {
+      mapState.guideNotes = textarea.value;
+      this.saveState();
+    });
+
+    notes.appendChild(label);
+    notes.appendChild(textarea);
+
+    card.appendChild(notes);
 
     return card;
   }
