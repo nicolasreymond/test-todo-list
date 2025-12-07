@@ -1,4 +1,13 @@
-﻿class ChecklistApp {
+﻿const DEFAULT_SYMBOLS = [
+  { symbol: "☀️ Soleil", meaning: "Rayon lumineux / feu ou énergie" },
+  { symbol: "🌙 Lune", meaning: "Phase nocturne, énigmes d'obscurité" },
+  { symbol: "🜂 Triangle", meaning: "Éléments à aligner dans l'ordre" },
+  { symbol: "蛇 Serpent", meaning: "Poison / venin ou rituel des ombres" },
+  { symbol: "🔱 Trident", meaning: "Eau / portail ou point de contrôle" },
+  { symbol: "☄️ Comète", meaning: "Séquence chronométrée ou tir chargé" }
+];
+
+class ChecklistApp {
   constructor() {
     this.STORAGE_KEY = "bo4_zombies_checklist_v2";
     this.state = this.loadState();
@@ -31,6 +40,21 @@
       this.state[mapName] = { tasks: {}, collapsedSections: {} };
     }
     return this.state[mapName];
+  }
+
+  ensureJournalDefaults(mapState, mapConfig) {
+    const fallback = mapConfig.symbolsLegend || DEFAULT_SYMBOLS;
+    if (!mapState.symbolJournal) {
+      mapState.symbolJournal = { notes: "", cheatsheet: [...fallback] };
+    }
+
+    if (!Array.isArray(mapState.symbolJournal.cheatsheet) || !mapState.symbolJournal.cheatsheet.length) {
+      mapState.symbolJournal.cheatsheet = [...fallback];
+    }
+
+    if (typeof mapState.symbolJournal.notes !== "string") {
+      mapState.symbolJournal.notes = "";
+    }
   }
 
   init() {
@@ -98,6 +122,8 @@
 
     const mapConfig = MAPS[this.currentMap];
     const mapState = this.getMapState(this.currentMap);
+    this.ensureJournalDefaults(mapState, mapConfig);
+
     const { done, total, percent } = this.computeMapProgress(mapState, mapConfig);
 
     document.getElementById("currentMapTitle").innerHTML = `
@@ -118,6 +144,10 @@
         </div>
       </div>
     `;
+
+    const toolsContainer = document.getElementById("mapTools");
+    toolsContainer.innerHTML = "";
+    toolsContainer.appendChild(this.createSymbolCard(mapState));
 
     const container = document.getElementById("sectionsContainer");
     container.innerHTML = "";
@@ -157,6 +187,10 @@
       <span class="section-icon"></span>
       <span class="section-name">${sectionName}</span>
     `;
+    titleEl.setAttribute("aria-label", `Afficher ou masquer la section ${sectionName}`);
+
+    const iconEl = titleEl.querySelector(".section-icon");
+    iconEl.textContent = "▼";
 
     const progressEl = document.createElement("div");
     progressEl.className = "section-progress";
@@ -198,6 +232,22 @@
       content.appendChild(taskDiv);
     });
 
+    const percent = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0;
+
+    const sectionMeta = document.createElement("div");
+    sectionMeta.className = "section-meta";
+    sectionMeta.innerHTML = `
+      <span class="section-counter" aria-label="${doneCount} tâches complétées sur ${tasks.length}">${doneCount}/${tasks.length}</span>
+      <span class="section-percent">${percent}%</span>
+    `;
+
+    const progressBar = document.createElement("div");
+    progressBar.className = "section-progress-bar";
+    progressBar.innerHTML = `<span style="width:${percent}%"></span>`;
+
+    progressEl.appendChild(sectionMeta);
+    progressEl.appendChild(progressBar);
+
     const completeBtn = document.createElement("button");
     completeBtn.className = "complete-section-btn";
     const allCompleted = doneCount === tasks.length && tasks.length > 0;
@@ -212,7 +262,13 @@
 
     if (isCollapsed) {
       content.style.display = "none";
-      titleEl.querySelector(".section-icon").textContent = "";
+      titleEl.querySelector(".section-icon").textContent = "▶";
+      titleEl.setAttribute("aria-expanded", "false");
+    }
+
+    if (!isCollapsed) {
+      titleEl.querySelector(".section-icon").textContent = "▼";
+      titleEl.setAttribute("aria-expanded", "true");
     }
 
     titleEl.addEventListener("click", () => {
@@ -221,7 +277,93 @@
 
     card.appendChild(content);
 
-    progressEl.textContent = `${doneCount}/${tasks.length}`;
+    return card;
+  }
+
+  createSymbolCard(mapState) {
+    const journal = mapState.symbolJournal;
+    const card = document.createElement("div");
+    card.className = "tools-card";
+
+    const header = document.createElement("div");
+    header.className = "tools-header";
+    header.innerHTML = `
+      <div>
+        <p class="tools-eyebrow">Notes rapides</p>
+        <h3>Carnet des symboles & codes</h3>
+        <p class="tools-subtitle">Note le symbole observé ou ajoute une référence rapide pour t'y retrouver pendant l'EE.</p>
+      </div>
+    `;
+
+    const notebook = document.createElement("div");
+    notebook.className = "symbol-notebook";
+    const noteLabel = document.createElement("label");
+    noteLabel.textContent = "Symbole ou code observé";
+    noteLabel.setAttribute("for", "symbolNotes" + this.currentMap);
+
+    const textarea = document.createElement("textarea");
+    textarea.id = "symbolNotes" + this.currentMap;
+    textarea.placeholder = "Ex : cercle – flèche – loup (ordre à retenir)";
+    textarea.value = journal.notes;
+    textarea.addEventListener("input", () => {
+      journal.notes = textarea.value;
+      this.saveState();
+    });
+
+    notebook.appendChild(noteLabel);
+    notebook.appendChild(textarea);
+
+    const cheatsheet = document.createElement("div");
+    cheatsheet.className = "symbol-cheatsheet";
+    const legendTitle = document.createElement("div");
+    legendTitle.className = "cheatsheet-title";
+    legendTitle.textContent = "Cheatsheet des symboles";
+    cheatsheet.appendChild(legendTitle);
+
+    const list = document.createElement("ul");
+    list.className = "cheatsheet-list";
+    journal.cheatsheet.forEach((item, index) => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span class="cheatsheet-symbol">${item.symbol}</span>
+        <span class="cheatsheet-meaning">${item.meaning}</span>
+        <button class="cheatsheet-remove" aria-label="Supprimer ce symbole">✕</button>
+      `;
+
+      li.querySelector(".cheatsheet-remove").addEventListener("click", () => {
+        journal.cheatsheet.splice(index, 1);
+        this.saveState();
+        this.render();
+      });
+
+      list.appendChild(li);
+    });
+    cheatsheet.appendChild(list);
+
+    const addForm = document.createElement("form");
+    addForm.className = "cheatsheet-add";
+    addForm.innerHTML = `
+      <input type="text" name="symbol" placeholder="Symbole (ex : ⚡, Feuille)" aria-label="Symbole" required />
+      <input type="text" name="meaning" placeholder="Signification" aria-label="Signification du symbole" required />
+      <button type="submit">Ajouter</button>
+    `;
+
+    addForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const symbol = addForm.symbol.value.trim();
+      const meaning = addForm.meaning.value.trim();
+      if (!symbol || !meaning) return;
+      journal.cheatsheet.push({ symbol, meaning });
+      addForm.reset();
+      this.saveState();
+      this.render();
+    });
+
+    cheatsheet.appendChild(addForm);
+
+    card.appendChild(header);
+    card.appendChild(notebook);
+    card.appendChild(cheatsheet);
 
     return card;
   }
