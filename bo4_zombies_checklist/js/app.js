@@ -98,11 +98,24 @@
 
     const mapConfig = MAPS[this.currentMap];
     const mapState = this.getMapState(this.currentMap);
+    const { done, total, percent } = this.computeMapProgress(mapState, mapConfig);
 
     document.getElementById("currentMapTitle").innerHTML = `
       <div class="map-header">
-        <h2>${this.currentMap}</h2>
-        <p class="map-description">${mapConfig.description || ""}</p>
+        <div>
+          <h2>${this.currentMap}</h2>
+          <p class="map-description">${mapConfig.description || ""}</p>
+        </div>
+        <div class="map-progress" aria-label="Progression globale de la map">
+          <div class="progress-label">
+            <span>Progression</span>
+            <strong>${done}/${total}</strong>
+          </div>
+          <div class="progress-bar" role="progressbar" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill" style="width:${percent}%"></div>
+          </div>
+          <div class="progress-percent">${percent}% complété</div>
+        </div>
       </div>
     `;
 
@@ -113,6 +126,22 @@
       const card = this.createSectionCard(sectionName, tasks, mapState);
       container.appendChild(card);
     }
+  }
+
+  computeMapProgress(mapState, mapConfig) {
+    let done = 0;
+    let total = 0;
+
+    for (const [sectionName, tasks] of Object.entries(mapConfig.sections)) {
+      tasks.forEach((_, index) => {
+        const taskId = `${this.currentMap}::${sectionName}::${index}`;
+        if (mapState.tasks[taskId]) done++;
+        total++;
+      });
+    }
+
+    const percent = total ? Math.round((done / total) * 100) : 0;
+    return { done, total, percent };
   }
 
   createSectionCard(sectionName, tasks, mapState) {
