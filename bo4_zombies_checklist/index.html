@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Checklist Zombies BO4</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Zombies BO4 – Checklist d’objectifs</h1>
+      <div class="subtitle">Coche les étapes en pleine game, tout est sauvegardé en local.</div>
+    </div>
+    <div class="controls">
+      <div class="controls-group">
+        <label for="mapSelect">Map :</label>
+        <select id="mapSelect"></select>
+      </div>
+      <div class="controls-group">
+        <button id="resetMapBtn" title="Réinitialise les cases cochées pour cette map seulement">Reset map</button>
+        <button id="resetAllBtn" title="Réinitialise toutes les maps">Reset tout</button>
+      </div>
+      <div class="controls-group">
+        <button id="exportBtn" title="Exporter la progression en JSON">Exporter</button>
+        <button id="importBtn" title="Importer une progression JSON">Importer</button>
+        <input id="importFile" type="file" accept="application/json" style="display:none" />
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="currentMapTitle" class="map-name"></div>
+    <div id="sectionsContainer" class="sections"></div>
+    <div class="footer-note">
+      Données stockées dans ton navigateur (localStorage). Pas de compte, pas de serveur.
+    </div>
+  </main>
+
+  <script src="js/maps.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
