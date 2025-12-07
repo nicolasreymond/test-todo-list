@@ -123,6 +123,7 @@ class ChecklistApp {
     const mapConfig = MAPS[this.currentMap];
     const mapState = this.getMapState(this.currentMap);
     this.ensureJournalDefaults(mapState, mapConfig);
+
     const { done, total, percent } = this.computeMapProgress(mapState, mapConfig);
 
     document.getElementById("currentMapTitle").innerHTML = `
